@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bộ Tư Lệnh 86 - WSO2AM Logs Supervision</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .banner {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+        }
+        h1, h2 {
+            margin: 20px 0;
+            text-align: center;
+        }
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        li {
+            background-color: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0px 0px 5px rgba(0,0,0,0.1);
+        }
+        .no-changes {
+            text-align: center;
+            color: #888;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination a {
+            padding: 10px 15px;
+            margin: 5px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff;
+        }
+        .pagination a.active {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <h1>Bộ Tư Lệnh 86 - WSO2AM Logs Supervision</h1>
+    </div>
+
+    <form action="/search/" method="post">
+        <label for="search_term">Nhập thông tin log cần tìm kiếm:</label>
+        <input type="text" id="search_term" name="search_term" placeholder="Ví dụ: localhost, 50.50.50.3, ...">
+        <br><br>
+        <input type="submit" value="Tìm kiếm">
+    </form>
+
+{% if file_status == 1 %}
+    <div class="no-changes">
+        <p>Đã có thay đổi trong access log kể từ lần kiểm tra gần nhất!</p>
+    </div>
+    
+{% else %}
+    <div class="no-changes">
+        <p>Không có thay đổi gần đây được phát hiện trong access log.</p>
+    </div>
+{% endif %}
+    <h2>Kết quả tìm kiếm:</h2>
+    <ul>
+        {% for line in relevant_lines %}
+            <li>{{ line }}</li>
+        {% endfor %}
+    </ul>
+    
+    <!-- Hiển thị phân trang -->
+    <div class="pagination">
+        {% for page_num in range(1, total_pages + 1) %}
+            <a href="?page={{ page_num }}" {% if current_page == page_num %}class="active"{% endif %}>{{ page_num }}</a>
+        {% endfor %}
+    </div>
+
+
+</body>
+</html>
+
+<!-- Thêm đoạn mã JavaScript sau phần HTML của bạn -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Lắng nghe sự kiện click trên các nút phân trang
+        const paginationLinks = document.querySelectorAll('.pagination a');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault(); // Ngăn chặn sự kiện mặc định của nút
+                const page = this.getAttribute('href').split('=')[1]; // Lấy số trang từ href của nút
+                fetchNewData(page); // Gọi hàm fetchNewData với số trang mới
+            });
+        });
+
+        function fetchNewData(page) {
+            // Thực hiện AJAX request đến API của bạn để lấy dữ liệu cho trang mới
+            fetch(`/search/?page=${page}`, { method: 'GET' })
+                .then(response => response.text())  // Chuyển đổi response sang text
+                .then(data => {
+                    const parser = new DOMParser();
+                    const newDocument = parser.parseFromString(data, 'text/html');
+                    const newContent = newDocument.querySelector('body').innerHTML;
+                    document.body.innerHTML = newContent; // Cập nhật nội dung trang với dữ liệu mới
+                })
+                .catch(error => console.error('Error fetching new data:', error));
+        }
+    });
+</script>
+
